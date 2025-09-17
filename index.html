@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cursor Animation Tool</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><radialGradient id="g"><stop offset="20%" stop-color="%23ffffff" stop-opacity="0.1"/><stop offset="50%" stop-color="%23ffffff" stop-opacity="0"/></radialGradient></defs><rect width="100" height="20" fill="url(%23g)"/></svg>') repeat-x;
+            animation: shimmer 3s ease-in-out infinite;
+        }
+        
+        @keyframes shimmer {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.8em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, #e2e8f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header p {
+            margin: 15px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .upload-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 50px;
+            transition: all 0.4s ease;
+            font-weight: 600;
+            font-size: 1.1em;
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.3);
+            border: 3px solid transparent;
+            background-clip: padding-box;
+            margin: 10px;
+        }
+        
+        .file-input-wrapper:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+            border-color: rgba(255,255,255,0.3);
+        }
+        
+        .file-input-wrapper input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .cursor-upload-section {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 5px solid #667eea;
+        }
+        
+        .cursor-upload-section h3 {
+            margin-top: 0;
+            color: #2d3748;
+            font-size: 1.3em;
+        }
+        
+        .cursor-input-group {
+            display: flex;
+            gap: 15px;
+            align-items: end;
+            margin-bottom: 20px;
+        }
+        
+        .cursor-input-group .input-wrapper {
+            flex: 1;
+        }
+        
+        .cursor-input-group textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+        
+        .cursor-input-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .cursor-input-group button {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            height: fit-content;
+            align-self: flex-end;
+        }
+        
+        .cursor-input-group button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(72, 187, 120, 0.3);
+        }
+        
+        .cursor-preview {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .cursor-preview-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            text-align: center;
+            min-width: 100px;
+        }
+        
+        .cursor-preview-item.active {
+            border-color: #667eea;
+            background: #f7fafc;
+        }
+        
+        .cursor-preview img {
+            max-width: 48px;
+            max-height: 48px;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            display: block;
+            margin: 0 auto 10px;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .control-group {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 5px solid #667eea;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .control-group:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 12px;
+            font-weight: 700;
+            color: #2d3748;
+            font-size: 1.05em;
+        }
+        
+        .control-group input, .control-group select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+            font-family: inherit;
+        }
+        
+        .control-group input:focus, .control-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: scale(1.02);
+        }
+        
+        .canvas-container {
+            position: relative;
+            text-align: center;
+            margin-bottom: 40px;
+            border: 3px dashed #cbd5e0;
+            border-radius: 16px;
+            min-height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        }
+        
+        .canvas-container.has-image {
+            border: 3px solid #667eea;
+            background: white;
+            box-shadow: inset 0 0 0 1px rgba(102, 126, 234, 0.1);
+        }
+        
+        .canvas-container #placeholder {
+            font-size: 1.3em;
+            color: #718096;
+            font-weight: 500;
+        }
+        
+        #screenshot-canvas {
+            max-width: 100%;
+            max-height: 600px;
+            cursor: crosshair;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+        }
+        
+        #screenshot-canvas:hover {
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+        
+        .position-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .position-card {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            border: 3px solid transparent;
+            transition: all 0.4s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        
+        .position-card.set {
+            border-color: #48bb78;
+            background: linear-gradient(135deg, #f0fff4 0%, #e6fffa 100%);
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(72, 187, 120, 0.15);
+        }
+        
+        .position-card h4 {
+            margin: 0 0 15px 0;
+            color: #2d3748;
+            font-size: 1.2em;
+            font-weight: 700;
+        }
+        
+        .position-card.set h4 {
+            color: #38a169;
+        }
+        
+        .buttons {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            margin: 0 15px 15px 0;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 17px;
+            font-weight: 600;
+            transition: all 0.4s ease;
+            display: inline-block;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            border: 2px solid transparent;
+        }
+        
+        .btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:active:not(:disabled) {
+            transform: translateY(-1px);
+        }
+        
+        .btn:disabled {
+            background: linear-gradient(135deg, #a0aec0 0%, #cbd5e0 100%);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            opacity: 0.6;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            box-shadow: 0 8px 25px rgba(72, 187, 120, 0.3);
+        }
+        
+        .btn-success:hover:not(:disabled) {
+            box-shadow: 0 15px 40px rgba(72, 187, 120, 0.4);
+        }
+        
+        .btn-reset {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+            box-shadow: 0 8px 25px rgba(245, 101, 101, 0.3);
+        }
+        
+        .btn-reset:hover:not(:disabled) {
+            box-shadow: 0 15px 40px rgba(245, 101, 101, 0.4);
+        }
+        
+        #preview-container {
+            text-align: center;
+            margin-top: 40px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+        
+        #preview-container.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .preview-canvas {
+            border: 3px solid #667eea;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            margin: 20px 0;
+        }
+        
+        .instructions {
+            background: linear-gradient(135deg, #ebf8ff 0%, #e6fffa 100%);
+            border-left: 5px solid #4299e1;
+            padding: 30px;
+            margin-bottom: 40px;
+            border-radius: 0 12px 12px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        
+        .instructions h3 {
+            margin-top: 0;
+            color: #2b6cb0;
+            font-size: 1.4em;
+            font-weight: 700;
+        }
+        
+        .instructions ol {
+            margin-bottom: 0;
+            padding-left: 25px;
+        }
+        
+        .instructions li {
+            margin-bottom: 12px;
+            font-size: 1.05em;
+            line-height: 1.6;
+        }
+        
+        .status {
+            text-align: center;
+            margin: 25px 0;
+            padding: 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+        }
+        
+        .status.info {
+            background: linear-gradient(135deg, #bee3f8 0%, #90cdf4 100%);
+            color: #2a4365;
+            border: 2px solid #4299e1;
+        }
+        
+        .status.success {
+            background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
+            color: #22543d;
+            border: 2px solid #48bb78;
+        }
+        
+        .status.error {
+            background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+            color: #742a2a;
+            border: 2px solid #f56565;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .position-info {
+                grid-template-columns: 1fr;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .header h1 {
+                font-size: 2.2em;
+            }
+            
+            .cursor-input-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Cursor Animation Studio</h1>
+            <p>Create stunning animated cursor movements and clicks on your screenshots</p>
+        </div>
+        
+        <div class="content">
+            <div class="instructions">
+                <h3>How to Create Your Animation</h3>
+                <ol>
+                    <li><strong>Upload</strong> a screenshot using the button below</li>
+                    <li><strong>Optionally customize</strong> your cursor by uploading a base64 string</li>
+                    <li><strong>Click</strong> on the image to set the start position (where cursor begins)</li>
+                    <li><strong>Click again</strong> to set the end position (where cursor will click)</li>
+                    <li><strong>Customize</strong> animation settings (speed, etc.)</li>
+                    <li><strong>Generate</strong> your animation and download the frames</li>
+                </ol>
+            </div>
+
+            <div class="upload-section">
+                <div class="file-input-wrapper">
+                    <input type="file" id="screenshot-input" accept="image/*">
+                    Upload Screenshot
+                </div>
+            </div>
+
+            <div class="cursor-upload-section">
+                <h3>Custom Cursor (Base64)</h3>
+                <div class="cursor-input-group">
+                    <div class="input-wrapper">
+                        <label for="cursor-base64">Paste your cursor image as base64 string:</label>
+                        <textarea 
+                            id="cursor-base64" 
+                            placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==&#10;&#10;or just paste the base64 part without the data:image prefix..."
+                        ></textarea>
+                    </div>
+                    <button id="load-cursor-btn">Load Cursor</button>
+                </div>
+                
+                <div class="cursor-preview">
+                    <div class="cursor-preview-item active" id="default-cursor-preview">
+                        <div style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🖱️</div>
+                        <small>Default</small>
+                    </div>
+                    <div class="cursor-preview-item" id="custom-cursor-preview" style="display: none;">
+                        <img id="custom-cursor-img" src="" alt="Custom cursor">
+                        <small>Custom</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label for="duration">Animation Duration (seconds)</label>
+                    <input type="number" id="duration" value="2.5" min="0.5" max="10" step="0.1">
+                </div>
+                
+                <div class="control-group">
+                    <label for="fps">Frames Per Second</label>
+                    <input type="number" id="fps" value="30" min="10" max="60" step="5">
+                </div>
+                
+                <div class="control-group">
+                    <label for="cursor-size">Cursor Size</label>
+                    <input type="number" id="cursor-size" value="32" min="16" max="64" step="2">
+                </div>
+                
+                <div class="control-group">
+                    <label for="easing">Movement Style</label>
+                    <select id="easing">
+                        <option value="linear">Linear (Constant Speed)</option>
+                        <option value="ease-in-out" selected>Ease In-Out (Smooth)</option>
+                        <option value="ease-in">Ease In (Slow Start)</option>
+                        <option value="ease-out">Ease Out (Slow End)</option>
+                        <option value="bounce">Bounce (Playful)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="canvas-container" id="canvas-container">
+                <div id="placeholder">Click "Upload Screenshot" to begin crafting your animation</div>
+                <canvas id="screenshot-canvas" style="display: none;"></canvas>
+            </div>
+            
+            <div class="position-info">
+                <div class="position-card" id="start-pos-card">
+                    <h4>Start Position</h4>
+                    <div id="start-pos-text">Click on image to set starting point</div>
+                </div>
+                <div class="position-card" id="end-pos-card">
+                    <h4>Click Target</h4>
+                    <div id="end-pos-text">Click on image to set destination</div>
+                </div>
+            </div>
+            
+            <div class="buttons">
+                <button class="btn btn-reset" id="reset-btn">Reset Positions</button>
+                <button class="btn btn-success" id="generate-btn" disabled>Generate Animation</button>
+            </div>
+            
+            <div id="status"></div>
+            
+            <div id="preview-container">
+                <h3>Your Generated Animation</h3>
+                <canvas id="preview-canvas" class="preview-canvas"></canvas>
+                <br>
+                <button class="btn btn-success" id="download-zip-btn">Download ZIP (All Frames)</button>
+                <button class="btn btn-success" id="download-gif-btn" style="margin-left: 10px;">Download GIF</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js"></script>
+    <script>
+        class CursorAnimationStudio {
+            constructor() {
+                this.canvas = document.getElementById('screenshot-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.previewCanvas = document.getElementById('preview-canvas');
+                this.previewCtx = this.previewCanvas.getContext('2d');
+                
+                this.image = null;
+                this.defaultCursorImage = null;
+                this.customCursorImage = null;
+                this.currentCursorImage = null;
+                this.startPos = null;
+                this.endPos = null;
+                this.frames = [];
+                this.isSettingStart = true;
+                
+                this.loadDefaultCursor();
+                this.initializeEventListeners();
+                this.showStatus('Welcome! Upload a screenshot to get started.', 'info');
+            }
+            
+            loadDefaultCursor() {
+                const defaultCursorDataUri = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAeCAYAAAAsEj5rAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAANUSURBVEiJtZVNaFxVFMd/575k3rwkk2QyaZI2bdI0H9aPWKu1tlixuBBx4UYXLnThQlciuHGhCxeCG1cKbnShCxeCG926sODGhaALFy5cWBBBwUKt2tpqa5I2zcf7eO/e4+LNm5k3mUkHPHDhvnfP/5z/Offcc18kIvwfRf2bBv9ThKqqhmEYpmmapmmaZhiGqaqq/lcDVVVV0zTNNE3TNM00TdM0zTTNfzWwUqkMViqVwWq1OlitVger1epgpVIZrFQqg5VKZfBfC6yqqmqapmmaZhiGaZqmaZqmaZqmqaqq/mNgpVIZrFQqg9VqdbBarQ5WKpXBSqUyWKlUBiuVyuA/BlYqFbVSqaiVSkWtVCpqpVJRK5WKWqlU1EqlolYqFfUfA6vVqlatVtVqtapWq1W1Wq2q1WpVrVaralNgpVJRK5WKWqlU1EqlojaBlUpFrVQqaqVSUSuVilqpVNRKpaI2BVar1f8cWK1W1Wq1qlar1X8cWKlU1EqlolYqFbVSqaiVSkWtVCpqE2C1WlWr1aparVb/cWClUlErlYpaqVTUSqWiVioVtQmwWq2q1WpVrVar6j8OrFaraqVSUSuVilqpVNRKpaJWKhW1CbBarapNgNVqVa1Wq2q1Wv3HgZVKRa1UKmqlUlErlYpaqVTUSqWiNgFWq1W1CbBarapNgNVqVf3HgdVqVa1UKmqlUlErlYpaqVTUSqWiNgE2AVarVbUJsFqtqk2A1WpV/ceBTYDValWtVCpqpVJRK5WKWqlU1EqlojYBNgFWq1W1CbBarapNgNVqVf3HgU2ATYDValVtAqxWq2oTYLVaVZsAm/5xYBNgE2C1WlWbAJsAq9Wq2gTYBNj0jwObAJsAmwCr1araBNgEWK1W1SbAJsCmfxzYBNgE2ATYBFitVtUmwCbAJsAmwCbAJsBKpaI2ATYBNgE2ATYBVqtVtQmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbBSqahNgE2ATYBNAN/7fgJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAL8C/gNhTj2XgAAAABJRU5ErkJggg==';
+                
+                this.defaultCursorImage = new Image();
+                this.defaultCursorImage.onload = () => {
+                    this.currentCursorImage = this.defaultCursorImage;
+                    console.log('Default cursor loaded');
+                };
+                this.defaultCursorImage.onerror = () => {
+                    console.log('Failed to load default cursor, will use canvas fallback');
+                };
+                this.defaultCursorImage.src = defaultCursorDataUri;
+            }
+            
+            initializeEventListeners() {
+                document.getElementById('screenshot-input').addEventListener('change', (e) => this.handleImageUpload(e));
+                document.getElementById('load-cursor-btn').addEventListener('click', () => this.loadBase64Cursor());
+                this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
+                document.getElementById('reset-btn').addEventListener('click', () => this.resetPositions());
+                document.getElementById('generate-btn').addEventListener('click', () => this.generateAnimation());
+                document.getElementById('download-zip-btn').addEventListener('click', () => this.downloadFrames());
+                document.getElementById('download-gif-btn').addEventListener('click', () => this.downloadGif());
+                
+                document.getElementById('default-cursor-preview').addEventListener('click', () => this.selectCursor('default'));
+                document.getElementById('custom-cursor-preview').addEventListener('click', () => this.selectCursor('custom'));
+            }
+            
+            loadBase64Cursor() {
+                const base64Input = document.getElementById('cursor-base64').value.trim();
+                if (!base64Input) {
+                    this.showStatus('Please enter a base64 string.', 'error');
+                    return;
+                }
+                
+                let dataUrl = base64Input;
+                
+                if (!base64Input.startsWith('data:')) {
+                    let imageType = 'png';
+                    if (base64Input.startsWith('/9j/') || base64Input.startsWith('iVBOR')) {
+                        imageType = base64Input.startsWith('/9j/') ? 'jpeg' : 'png';
+                    }
+                    dataUrl = `data:image/${imageType};base64,${base64Input}`;
+                }
+                
+                this.loadCursorFromDataUrl(dataUrl);
+            }
+            
+            loadCursorFromDataUrl(dataUrl) {
+                this.customCursorImage = new Image();
+                this.customCursorImage.onload = () => {
+                    const customPreview = document.getElementById('custom-cursor-preview');
+                    const customImg = document.getElementById('custom-cursor-img');
+                    customImg.src = dataUrl;
+                    customPreview.style.display = 'block';
+                    
+                    this.selectCursor('custom');
+                    this.showStatus('Custom cursor loaded successfully!', 'success');
+                    document.getElementById('cursor-base64').value = '';
+                };
+                this.customCursorImage.onerror = () => {
+                    this.showStatus('Failed to load cursor image. Please check your base64 string.', 'error');
+                };
+                this.customCursorImage.src = dataUrl;
+            }
+            
+            selectCursor(type) {
+                document.getElementById('default-cursor-preview').classList.remove('active');
+                document.getElementById('custom-cursor-preview').classList.remove('active');
+                
+                if (type === 'custom' && this.customCursorImage) {
+                    document.getElementById('custom-cursor-preview').classList.add('active');
+                    this.currentCursorImage = this.customCursorImage;
+                    this.showStatus('Custom cursor selected!', 'info');
+                } else {
+                    document.getElementById('default-cursor-preview').classList.add('active');
+                    this.currentCursorImage = this.defaultCursorImage;
+                    this.showStatus('Default cursor selected!', 'info');
+                }
+            }
+            
+            handleImageUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                if (!file.type.startsWith('image/')) {
+                    this.showStatus('Please select a valid image file.', 'error');
+                    return;
+                }
+                
+                this.showStatus('Loading image...', 'info');
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.image = new Image();
+                    this.image.onload = () => {
+                        this.displayImage();
+                        this.resetPositions();
+                        this.showStatus('Image loaded! Click to set your start position.', 'success');
+                    };
+                    this.image.onerror = () => {
+                        this.showStatus('Failed to load image. Please try another file.', 'error');
+                    };
+                    this.image.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            displayImage() {
+                const container = document.getElementById('canvas-container');
+                const placeholder = document.getElementById('placeholder');
+                
+                const maxWidth = Math.min(900, container.clientWidth - 60);
+                const maxHeight = 600;
+                
+                let displayWidth = this.image.width;
+                let displayHeight = this.image.height;
+                
+                if (displayWidth > maxWidth) {
+                    displayHeight = (displayHeight * maxWidth) / displayWidth;
+                    displayWidth = maxWidth;
+                }
+                
+                if (displayHeight > maxHeight) {
+                    displayWidth = (displayWidth * maxHeight) / displayHeight;
+                    displayHeight = maxHeight;
+                }
+                
+                this.canvas.width = displayWidth;
+                this.canvas.height = displayHeight;
+                this.canvas.style.display = 'block';
+                placeholder.style.display = 'none';
+                container.classList.add('has-image');
+                
+                this.redrawCanvas();
+            }
+            
+            redrawCanvas() {
+                if (!this.image) return;
+                
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.drawImage(this.image, 0, 0, this.canvas.width, this.canvas.height);
+                
+                if (this.startPos) {
+                    this.drawPositionMarker(this.startPos.x, this.startPos.y, '#48bb78', 'START');
+                }
+                if (this.endPos) {
+                    this.drawPositionMarker(this.endPos.x, this.endPos.y, '#f56565', 'END');
+                }
+            }
+            
+            drawPositionMarker(x, y, color, label) {
+                this.ctx.save();
+                
+                this.ctx.shadowColor = color;
+                this.ctx.shadowBlur = 20;
+                this.ctx.shadowOffsetX = 0;
+                this.ctx.shadowOffsetY = 0;
+                
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, 15, 0, 2 * Math.PI);
+                this.ctx.fillStyle = color;
+                this.ctx.fill();
+                
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, 12, 0, 2 * Math.PI);
+                this.ctx.fillStyle = 'white';
+                this.ctx.fill();
+                
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, 3, 0, 2 * Math.PI);
+                this.ctx.fillStyle = color;
+                this.ctx.fill();
+                
+                this.ctx.shadowBlur = 0;
+                
+                this.ctx.font = 'bold 12px system-ui';
+                this.ctx.fillStyle = 'white';
+                this.ctx.strokeStyle = color;
+                this.ctx.lineWidth = 2;
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                
+                const labelY = y - 35;
+                this.ctx.strokeText(label, x, labelY);
+                this.ctx.fillText(label, x, labelY);
+                
+                this.ctx.restore();
+            }
+            
+            handleCanvasClick(event) {
+                if (!this.image) return;
+                
+                const rect = this.canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                
+                if (this.isSettingStart || !this.startPos) {
+                    this.startPos = { x, y };
+                    this.updatePositionDisplay('start', x, y);
+                    this.isSettingStart = false;
+                    this.showStatus('Start position set! Now click where you want the cursor to end.', 'info');
+                } else {
+                    this.endPos = { x, y };
+                    this.updatePositionDisplay('end', x, y);
+                    this.showStatus('Perfect! Both positions set. Ready to generate your animation!', 'success');
+                    document.getElementById('generate-btn').disabled = false;
+                }
+                
+                this.redrawCanvas();
+            }
+            
+            updatePositionDisplay(type, x, y) {
+                const card = document.getElementById(`${type}-pos-card`);
+                const text = document.getElementById(`${type}-pos-text`);
+                
+                const scaleX = this.image.width / this.canvas.width;
+                const scaleY = this.image.height / this.canvas.height;
+                const originalX = Math.round(x * scaleX);
+                const originalY = Math.round(y * scaleY);
+                
+                text.textContent = `(${originalX}, ${originalY})`;
+                card.classList.add('set');
+            }
+            
+            resetPositions() {
+                this.startPos = null;
+                this.endPos = null;
+                this.isSettingStart = true;
+                
+                document.getElementById('start-pos-card').classList.remove('set');
+                document.getElementById('end-pos-card').classList.remove('set');
+                document.getElementById('start-pos-text').textContent = 'Click on image to set starting point';
+                document.getElementById('end-pos-text').textContent = 'Click on image to set destination';
+                document.getElementById('generate-btn').disabled = true;
+                
+                this.redrawCanvas();
+                
+                if (this.image) {
+                    this.showStatus('Positions reset! Click on the image to set the start position.', 'info');
+                } else {
+                    this.showStatus('Upload a screenshot to begin.', 'info');
+                }
+            }
+            
+            showStatus(message, type = 'info') {
+                const status = document.getElementById('status');
+                status.textContent = message;
+                status.className = `status ${type}`;
+                status.style.display = 'block';
+                
+                if (type === 'success' || type === 'error') {
+                    setTimeout(() => {
+                        if (status.textContent === message) {
+                            status.style.display = 'none';
+                        }
+                    }, 5000);
+                }
+            }
+            
+            easeInOut(t) {
+                return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+            }
+            
+            easeIn(t) {
+                return t * t * t;
+            }
+            
+            easeOut(t) {
+                return 1 - Math.pow(1 - t, 3);
+            }
+            
+            bounce(t) {
+                const n1 = 7.5625;
+                const d1 = 2.75;
+                
+                if (t < 1 / d1) {
+                    return n1 * t * t;
+                } else if (t < 2 / d1) {
+                    return n1 * (t -= 1.5 / d1) * t + 0.75;
+                } else if (t < 2.5 / d1) {
+                    return n1 * (t -= 2.25 / d1) * t + 0.9375;
+                } else {
+                    return n1 * (t -= 2.625 / d1) * t + 0.984375;
+                }
+            }
+            
+            applyEasing(t, easingType) {
+                switch (easingType) {
+                    case 'ease-in': return this.easeIn(t);
+                    case 'ease-out': return this.easeOut(t);
+                    case 'ease-in-out': return this.easeInOut(t);
+                    case 'bounce': return this.bounce(t);
+                    default: return t;
+                }
+            }
+            
+            drawCursor(ctx, x, y, size = 32, isClicking = false) {
+                if (this.currentCursorImage && this.currentCursorImage.complete) {
+                    this.drawImageCursor(ctx, x, y, size, isClicking);
+                } else {
+                    this.drawDefaultArrow(ctx, x, y, size, isClicking);
+                }
+            }
+            
+            drawImageCursor(ctx, x, y, size = 32, isClicking = false) {
+                ctx.save();
+                
+                const aspectRatio = this.currentCursorImage.naturalWidth / this.currentCursorImage.naturalHeight;
+                let drawWidth = size;
+                let drawHeight = size / aspectRatio;
+                
+                if (aspectRatio > 2) {
+                    drawHeight = size;
+                    drawWidth = size * aspectRatio;
+                }
+                
+                if (isClicking) {
+                    ctx.shadowColor = '#4299e1';
+                    ctx.shadowBlur = 8;
+                    const originalWidth = drawWidth;
+                    const originalHeight = drawHeight;
+                    drawWidth *= 1.05;
+                    drawHeight *= 1.05;
+                    x -= (drawWidth - originalWidth) / 2;
+                    y -= (drawHeight - originalHeight) / 2;
+                } else {
+                    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                    ctx.shadowBlur = 3;
+                    ctx.shadowOffsetX = 1;
+                    ctx.shadowOffsetY = 1;
+                }
+                
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.globalCompositeOperation = 'source-over';
+                
+                ctx.drawImage(this.currentCursorImage, x, y, drawWidth, drawHeight);
+                
+                ctx.restore();
+            }
+            
+            drawDefaultArrow(ctx, x, y, size = 32, isClicking = false) {
+                ctx.save();
+                
+                const scale = size / 24;
+                ctx.scale(scale, scale);
+                
+                const scaledX = x / scale;
+                const scaledY = y / scale;
+                
+                ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                ctx.shadowBlur = 3;
+                ctx.shadowOffsetX = 1;
+                ctx.shadowOffsetY = 1;
+                
+                ctx.fillStyle = isClicking ? '#4299e1' : 'white';
+                ctx.beginPath();
+                ctx.moveTo(scaledX, scaledY);
+                ctx.lineTo(scaledX, scaledY + 18);
+                ctx.lineTo(scaledX + 5, scaledY + 14);
+                ctx.lineTo(scaledX + 8, scaledY + 14);
+                ctx.lineTo(scaledX + 12, scaledY + 20);
+                ctx.lineTo(scaledX + 14, scaledY + 18);
+                ctx.lineTo(scaledX + 10, scaledY + 12);
+                ctx.lineTo(scaledX + 15, scaledY + 6);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+                
+                ctx.strokeStyle = isClicking ? '#2b6cb0' : '#2d3748';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(scaledX, scaledY);
+                ctx.lineTo(scaledX, scaledY + 18);
+                ctx.lineTo(scaledX + 5, scaledY + 14);
+                ctx.lineTo(scaledX + 8, scaledY + 14);
+                ctx.lineTo(scaledX + 12, scaledY + 20);
+                ctx.lineTo(scaledX + 14, scaledY + 18);
+                ctx.lineTo(scaledX + 10, scaledY + 12);
+                ctx.lineTo(scaledX + 15, scaledY + 6);
+                ctx.closePath();
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+            
+            generateAnimation() {
+                if (!this.startPos || !this.endPos) return;
+                
+                this.showStatus('Generating high-quality animation frames...', 'info');
+                document.getElementById('generate-btn').disabled = true;
+                
+                const duration = parseFloat(document.getElementById('duration').value);
+                const fps = parseInt(document.getElementById('fps').value);
+                const cursorSize = parseInt(document.getElementById('cursor-size').value);
+                const easingType = document.getElementById('easing').value;
+                
+                const totalFrames = Math.ceil(duration * fps);
+                const clickStartFrame = totalFrames - 8;
+                const clickDuration = 8;
+                
+                this.frames = [];
+                
+                this.previewCanvas.width = this.canvas.width;
+                this.previewCanvas.height = this.canvas.height;
+                
+                let frameCount = 0;
+                const generateFrame = () => {
+                    if (frameCount <= totalFrames) {
+                        const progress = frameCount / totalFrames;
+                        const easedProgress = this.applyEasing(progress, easingType);
+                        
+                        const currentX = this.startPos.x + (this.endPos.x - this.startPos.x) * easedProgress;
+                        const currentY = this.startPos.y + (this.endPos.y - this.startPos.y) * easedProgress;
+                        
+                        const isClicking = frameCount >= clickStartFrame && frameCount < clickStartFrame + clickDuration;
+                        
+                        const frameCanvas = document.createElement('canvas');
+                        frameCanvas.width = this.canvas.width;
+                        frameCanvas.height = this.canvas.height;
+                        const frameCtx = frameCanvas.getContext('2d');
+                        
+                        frameCtx.drawImage(this.image, 0, 0, this.canvas.width, this.canvas.height);
+                        this.drawCursor(frameCtx, currentX, currentY, cursorSize, isClicking);
+                        
+                        if (isClicking) {
+                            const clickProgress = (frameCount - clickStartFrame) / clickDuration;
+                            this.drawClickEffect(frameCtx, this.endPos.x, this.endPos.y, clickProgress);
+                        }
+                        
+                        this.frames.push(frameCanvas);
+                        frameCount++;
+                        
+                        this.showStatus(`Generating frames... ${Math.round((frameCount / (totalFrames + 1)) * 100)}%`, 'info');
+                        
+                        requestAnimationFrame(generateFrame);
+                    } else {
+                        this.showAnimation();
+                        document.getElementById('generate-btn').disabled = false;
+                    }
+                };
+                
+                generateFrame();
+            }
+            
+            drawClickEffect(ctx, x, y, progress) {
+                ctx.save();
+                
+                for (let i = 0; i < 3; i++) {
+                    const delay = i * 0.3;
+                    const adjustedProgress = Math.max(0, progress - delay) / (1 - delay);
+                    
+                    if (adjustedProgress > 0) {
+                        const radius = adjustedProgress * (30 + i * 10);
+                        const alpha = (1 - adjustedProgress) * 0.6;
+                        
+                        ctx.globalAlpha = alpha;
+                        ctx.strokeStyle = i === 0 ? '#4299e1' : (i === 1 ? '#63b3ed' : '#90cdf4');
+                        ctx.lineWidth = 3 - i;
+                        ctx.beginPath();
+                        ctx.arc(x, y, radius, 0, 2 * Math.PI);
+                        ctx.stroke();
+                    }
+                }
+                
+                if (progress < 0.3) {
+                    ctx.globalAlpha = (0.3 - progress) / 0.3;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 8, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+            }
+            
+            showAnimation() {
+                let currentFrame = 0;
+                const fps = parseInt(document.getElementById('fps').value);
+                const frameDelay = 1000 / fps;
+                
+                const previewContainer = document.getElementById('preview-container');
+                previewContainer.classList.add('show');
+                
+                const animate = () => {
+                    if (this.frames.length > 0) {
+                        this.previewCtx.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
+                        this.previewCtx.drawImage(this.frames[currentFrame], 0, 0);
+                        
+                        currentFrame = (currentFrame + 1) % this.frames.length;
+                        setTimeout(() => requestAnimationFrame(animate), frameDelay);
+                    }
+                };
+                
+                animate();
+                this.showStatus('Animation generated successfully! Preview is playing above.', 'success');
+            }
+            
+            downloadFrames() {
+                if (this.frames.length === 0) {
+                    this.showStatus('No frames to download. Generate an animation first.', 'error');
+                    return;
+                }
+                
+                this.showStatus('Creating ZIP file with all frames...', 'info');
+                document.getElementById('download-zip-btn').disabled = true;
+                
+                this.createZipDownload();
+            }
+            
+            downloadGif() {
+                if (this.frames.length === 0) {
+                    this.showStatus('No frames to download. Generate an animation first.', 'error');
+                    return;
+                }
+                
+                this.showStatus('Creating GIF animation...', 'info');
+                document.getElementById('download-gif-btn').disabled = true;
+                
+                this.createGifDownload();
+            }
+            
+            createGifDownload() {
+                const fps = parseInt(document.getElementById('fps').value);
+                const delay = Math.round(1000 / fps);
+                
+                if (typeof GIF === 'undefined') {
+                    this.showStatus('GIF library not loaded. Downloading frames as ZIP instead.', 'error');
+                    this.downloadFrames();
+                    return;
+                }
+                
+                try {
+                    // Try with local worker script first, fallback to no workers
+                    const gif = new GIF({
+                        workers: 2,
+                        quality: 10,
+                        width: this.canvas.width,
+                        height: this.canvas.height,
+                        repeat: 0,
+                        workerScript: './gif.worker.js' // Local worker script
+                    });
+                    
+                    gif.on('progress', (progress) => {
+                        const percent = Math.round(progress * 100);
+                        this.showStatus(`Generating GIF... ${percent}%`, 'info');
+                    });
+                    
+                    gif.on('finished', (blob) => {
+                        const link = document.createElement('a');
+                        link.download = 'cursor-animation.gif';
+                        link.href = URL.createObjectURL(blob);
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        
+                        setTimeout(() => URL.revokeObjectURL(link.href), 100);
+                        
+                        const fileSizeMB = (blob.size / (1024 * 1024)).toFixed(2);
+                        this.showStatus(`GIF downloaded successfully! (${fileSizeMB} MB)`, 'success');
+                        document.getElementById('download-gif-btn').disabled = false;
+                    });
+                    
+                    gif.on('abort', () => {
+                        this.showStatus('GIF generation was aborted.', 'error');
+                        document.getElementById('download-gif-btn').disabled = false;
+                    });
+                    
+                    // Set timeout for generation
+                    const timeout = setTimeout(() => {
+                        this.showStatus('GIF generation is taking too long. Try downloading as ZIP instead.', 'error');
+                        document.getElementById('download-gif-btn').disabled = false;
+                    }, 30000);
+                    
+                    gif.on('finished', () => {
+                        clearTimeout(timeout);
+                    });
+                    
+                    for (let i = 0; i < this.frames.length; i++) {
+                        gif.addFrame(this.frames[i], { delay: delay });
+                        this.showStatus(`Adding frame ${i + 1}/${this.frames.length} to GIF...`, 'info');
+                    }
+                    
+                    this.showStatus('Processing GIF... This may take a moment without web workers.', 'info');
+                    gif.render();
+                    
+                } catch (error) {
+                    console.error('GIF creation error:', error);
+                    if (error.message.includes('Worker') || error.message.includes('CORS')) {
+                        this.showStatus('Cannot create GIF due to browser security restrictions. Downloading frames as ZIP instead.', 'info');
+                        this.downloadFrames();
+                    } else {
+                        this.showStatus(`Failed to create GIF: ${error.message}`, 'error');
+                        document.getElementById('download-gif-btn').disabled = false;
+                    }
+                }
+            }
+            
+            async createZipDownload() {
+                try {
+                    const zip = new JSZip();
+                    
+                    for (let i = 0; i < this.frames.length; i++) {
+                        const canvas = this.frames[i];
+                        const dataURL = canvas.toDataURL('image/png');
+                        const base64Data = dataURL.split(',')[1];
+                        const fileName = `frame_${String(i + 1).padStart(4, '0')}.png`;
+                        
+                        zip.file(fileName, base64Data, { base64: true });
+                        
+                        const progress = Math.round(((i + 1) / this.frames.length) * 80);
+                        this.showStatus(`Adding frame ${i + 1}/${this.frames.length} to ZIP (${progress}%)...`, 'info');
+                    }
+                    
+                    const animInfo = {
+                        totalFrames: this.frames.length,
+                        fps: parseInt(document.getElementById('fps').value),
+                        duration: parseFloat(document.getElementById('duration').value),
+                        dimensions: {
+                            width: this.canvas.width,
+                            height: this.canvas.height
+                        },
+                        positions: {
+                            start: this.startPos,
+                            end: this.endPos
+                        }
+                    };
+                    
+                    zip.file('animation-info.json', JSON.stringify(animInfo, null, 2));
+                    
+                    this.showStatus('Generating ZIP file... 90%', 'info');
+                    
+                    const zipBlob = await zip.generateAsync({
+                        type: 'blob',
+                        compression: 'DEFLATE',
+                        compressionOptions: { level: 6 }
+                    });
+                    
+                    const link = document.createElement('a');
+                    link.download = 'cursor-animation-frames.zip';
+                    link.href = URL.createObjectURL(zipBlob);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    setTimeout(() => URL.revokeObjectURL(link.href), 100);
+                    
+                    this.showStatus('ZIP file downloaded successfully!', 'success');
+                    
+                } catch (error) {
+                    console.error('ZIP creation failed:', error);
+                    this.showStatus('Failed to create ZIP file.', 'error');
+                } finally {
+                    document.getElementById('download-zip-btn').disabled = false;
+                }
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            new CursorAnimationStudio();
+        });
+    </script>
+</body>
+</html>
