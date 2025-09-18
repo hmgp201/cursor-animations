@@ -261,6 +261,7 @@
             justify-content: center;
             transition: all 0.3s ease;
             background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            overflow: auto;
         }
         
         .canvas-container.has-image {
@@ -276,8 +277,6 @@
         }
         
         #screenshot-canvas {
-            max-width: 100%;
-            max-height: 600px;
             cursor: crosshair;
             border-radius: 8px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.15);
@@ -453,6 +452,15 @@
             color: #742a2a;
             border: 2px solid #f56565;
         }
+
+        .resolution-info {
+            background: linear-gradient(135deg, #f0fff4 0%, #e6fffa 100%);
+            border: 2px solid #48bb78;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
         
         @media (max-width: 768px) {
             .controls {
@@ -484,8 +492,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Cursor Animation Studio</h1>
-            <p>Create stunning animated cursor movements and clicks on your screenshots</p>
+            <h1>HD Cursor Animation Studio</h1>
+            <p>Create stunning animated cursor movements and clicks on your screenshots in full HD</p>
         </div>
         
         <div class="content">
@@ -510,9 +518,12 @@
 
             <div class="cursor-upload-section">
                 <h3>Custom Cursor (Base64)</h3>
+                <p style="color: #718096; margin-bottom: 15px;">
+                    Currently using: <strong id="cursor-status">Default cursor</strong>
+                </p>
                 <div class="cursor-input-group">
                     <div class="input-wrapper">
-                        <label for="cursor-base64">Paste your cursor image as base64 string:</label>
+                        <label for="cursor-base64">Paste your cursor image as base64 string to override default:</label>
                         <textarea 
                             id="cursor-base64" 
                             placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==&#10;&#10;or just paste the base64 part without the data:image prefix..."
@@ -523,7 +534,7 @@
                 
                 <div class="cursor-preview">
                     <div class="cursor-preview-item active" id="default-cursor-preview">
-                        <div style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🖱️</div>
+                        <img id="default-cursor-img" src="" alt="Default cursor">
                         <small>Default</small>
                     </div>
                     <div class="cursor-preview-item" id="custom-cursor-preview" style="display: none;">
@@ -545,8 +556,8 @@
                 </div>
                 
                 <div class="control-group">
-                    <label for="cursor-size">Cursor Size</label>
-                    <input type="number" id="cursor-size" value="32" min="16" max="64" step="2">
+                    <label for="cursor-size">Cursor Size (relative to image)</label>
+                    <input type="number" id="cursor-size" value="32" min="16" max="128" step="2">
                 </div>
                 
                 <div class="control-group">
@@ -562,8 +573,13 @@
             </div>
             
             <div class="canvas-container" id="canvas-container">
-                <div id="placeholder">Click "Upload Screenshot" to begin crafting your animation</div>
+                <div id="placeholder">Click "Upload Screenshot" to begin crafting your HD animation</div>
                 <canvas id="screenshot-canvas" style="display: none;"></canvas>
+            </div>
+
+            <div id="resolution-info" class="resolution-info" style="display: none;">
+                <strong>Image Resolution:</strong> <span id="image-dimensions"></span><br>
+                <strong>Output Resolution:</strong> <span id="output-dimensions"></span>
             </div>
             
             <div class="position-info">
@@ -579,13 +595,13 @@
             
             <div class="buttons">
                 <button class="btn btn-reset" id="reset-btn">Reset Positions</button>
-                <button class="btn btn-success" id="generate-btn" disabled>Generate Animation</button>
+                <button class="btn btn-success" id="generate-btn" disabled>Generate HD Animation</button>
             </div>
             
             <div id="status"></div>
             
             <div id="preview-container">
-                <h3>Your Generated Animation</h3>
+                <h3>Your Generated HD Animation</h3>
                 <canvas id="preview-canvas" class="preview-canvas"></canvas>
                 <br>
                 <button class="btn btn-success" id="download-zip-btn">Download ZIP (All Frames)</button>
@@ -597,14 +613,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js"></script>
     <script>
-        class CursorAnimationStudio {
+        class HDCursorAnimationStudio {
             constructor() {
+                // Default cursor in base64 - you can change this to any cursor you want
+                this.DEFAULT_CURSOR_BASE64 = 'data:image/png;base64, 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';
+
                 this.canvas = document.getElementById('screenshot-canvas');
                 this.ctx = this.canvas.getContext('2d');
                 this.previewCanvas = document.getElementById('preview-canvas');
                 this.previewCtx = this.previewCanvas.getContext('2d');
                 
-                this.image = null;
+                this.originalImage = null; // Store original full-resolution image
+                this.displayImage = null;  // Store display-scaled image
                 this.defaultCursorImage = null;
                 this.customCursorImage = null;
                 this.currentCursorImage = null;
@@ -613,23 +633,27 @@
                 this.frames = [];
                 this.isSettingStart = true;
                 
+                // Scale factors to convert between display coordinates and original image coordinates
+                this.scaleX = 1;
+                this.scaleY = 1;
+                
                 this.loadDefaultCursor();
                 this.initializeEventListeners();
                 this.showStatus('Welcome! Upload a screenshot to get started.', 'info');
             }
             
             loadDefaultCursor() {
-                const defaultCursorDataUri = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAeCAYAAAAsEj5rAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAANUSURBVEiJtZVNaFxVFMd/575k3rwkk2QyaZI2bdI0H9aPWKu1tlixuBBx4UYXLnThQlciuHGhCxeCG1cKbnShCxeCG926sODGhaALFy5cWBBBwUKt2tpqa5I2zcf7eO/e4+LNm5k3mUkHPHDhvnfP/5z/Offcc18kIvwfRf2bBv9ThKqqhmEYpmmapmmaZhiGqaqq/lcDVVVV0zTNNE3TNM00TdM0zTTNfzWwUqkMViqVwWq1OlitVger1epgpVIZrFQqg5VKZfBfC6yqqmqapmmaZhiGaZqmaZqmaZqmqaqq/mNgpVIZrFQqg9VqdbBarQ5WKpXBSqUyWKlUBiuVyuA/BlYqFbVSqaiVSkWtVCpqpVJRK5WKWqlU1EqlolYqFfUfA6vVqlatVtVqtapWq1W1Wq2q1WpVrVaralNgpVJRK5WKWqlU1EqlojaBlUpFrVQqaqVSUSuVilqpVNRKpaI2BVar1f8cWK1W1Wq1qlar1X8cWKlU1EqlolYqFbVSqaiVSkWtVCpqE2C1WlWr1aparVb/cWClUlErlYpaqVTUSqWiVioVtQmwWq2q1WpVrVar6j8OrFaraqVSUSuVilqpVNRKpaJWKhW1CbBarapNgNVqVa1Wq2q1Wv3HgZVKRa1UKmqlUlErlYpaqVTUSqWiNgFWq1W1CbBarapNgNVqVf3HgdVqVa1UKmqlUlErlYpaqVTUSqWiNgE2AVarVbUJsFqtqk2A1WpV/ceBTYDValWtVCpqpVJRK5WKWqlU1EqlojYBNgFWq1W1CbBarapNgNVqVf3HgU2ATYDValVtAqxWq2oTYLVaVZsAm/5xYBNgE2C1WlWbAJsAq9Wq2gTYBNj0jwObAJsAmwCr1araBNgEWK1W1SbAJsCmfxzYBNgE2ATYBFitVtUmwCbAJsAmwCbAJsBKpaI2ATYBNgE2ATYBVqtVtQmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbBSqahNgE2ATYBNAN/7fgJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAJsAmwCbAL8C/gNhTj2XgAAAABJRU5ErkJggg==';
-                
                 this.defaultCursorImage = new Image();
                 this.defaultCursorImage.onload = () => {
                     this.currentCursorImage = this.defaultCursorImage;
+                    document.getElementById('default-cursor-img').src = this.DEFAULT_CURSOR_BASE64;
+                    document.getElementById('cursor-status').textContent = 'Default cursor';
                     console.log('Default cursor loaded');
                 };
                 this.defaultCursorImage.onerror = () => {
                     console.log('Failed to load default cursor, will use canvas fallback');
                 };
-                this.defaultCursorImage.src = defaultCursorDataUri;
+                this.defaultCursorImage.src = this.DEFAULT_CURSOR_BASE64;
             }
             
             initializeEventListeners() {
@@ -637,7 +661,7 @@
                 document.getElementById('load-cursor-btn').addEventListener('click', () => this.loadBase64Cursor());
                 this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
                 document.getElementById('reset-btn').addEventListener('click', () => this.resetPositions());
-                document.getElementById('generate-btn').addEventListener('click', () => this.generateAnimation());
+                document.getElementById('generate-btn').addEventListener('click', () => this.generateHDAnimation());
                 document.getElementById('download-zip-btn').addEventListener('click', () => this.downloadFrames());
                 document.getElementById('download-gif-btn').addEventListener('click', () => this.downloadGif());
                 
@@ -690,51 +714,104 @@
                 if (type === 'custom' && this.customCursorImage) {
                     document.getElementById('custom-cursor-preview').classList.add('active');
                     this.currentCursorImage = this.customCursorImage;
+                    document.getElementById('cursor-status').textContent = 'Custom cursor';
                     this.showStatus('Custom cursor selected!', 'info');
                 } else {
                     document.getElementById('default-cursor-preview').classList.add('active');
                     this.currentCursorImage = this.defaultCursorImage;
+                    document.getElementById('cursor-status').textContent = 'Default cursor';
                     this.showStatus('Default cursor selected!', 'info');
                 }
             }
             
             handleImageUpload(event) {
+                console.log('Upload event triggered', event);
+                
                 const file = event.target.files[0];
-                if (!file) return;
+                console.log('Selected file:', file);
+                
+                if (!file) {
+                    console.log('No file selected');
+                    this.showStatus('No file selected. Please try again.', 'error');
+                    return;
+                }
+                
+                console.log('File details:', {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size
+                });
+                
+                // Check file size (max 50MB)
+                if (file.size > 50 * 1024 * 1024) {
+                    this.showStatus('File is too large. Please use an image smaller than 50MB.', 'error');
+                    return;
+                }
                 
                 if (!file.type.startsWith('image/')) {
-                    this.showStatus('Please select a valid image file.', 'error');
+                    this.showStatus(`Invalid file type: ${file.type}. Please select a valid image file (PNG, JPG, GIF, etc.).`, 'error');
                     return;
                 }
                 
                 this.showStatus('Loading image...', 'info');
                 
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                    this.image = new Image();
-                    this.image.onload = () => {
-                        this.displayImage();
-                        this.resetPositions();
-                        this.showStatus('Image loaded! Click to set your start position.', 'success');
+                const self = this; // Store reference to avoid scope issues
+                
+                reader.onload = function(e) {
+                    console.log('FileReader loaded successfully');
+                    self.originalImage = new Image();
+                    
+                    self.originalImage.onload = function() {
+                        console.log('Image loaded:', self.originalImage.width, 'x', self.originalImage.height);
+                        
+                        // Call methods directly on self
+                        self.performDisplayImage();
+                        self.performResetPositions();
+                        self.performUpdateResolutionInfo();
+                        self.showStatus('HD image loaded! Click to set your start position.', 'success');
                     };
-                    this.image.onerror = () => {
-                        this.showStatus('Failed to load image. Please try another file.', 'error');
+                    
+                    self.originalImage.onerror = function(error) {
+                        console.error('Image load error:', error);
+                        self.showStatus('Failed to load image. The file may be corrupted or in an unsupported format.', 'error');
                     };
-                    this.image.src = e.target.result;
+                    
+                    self.originalImage.src = e.target.result;
                 };
-                reader.readAsDataURL(file);
+                
+                reader.onerror = function(error) {
+                    console.error('FileReader error:', error);
+                    self.showStatus('Failed to read file. Please try again with a different image.', 'error');
+                };
+                
+                reader.onprogress = function(e) {
+                    if (e.lengthComputable) {
+                        const progress = Math.round((e.loaded / e.total) * 100);
+                        self.showStatus(`Loading image... ${progress}%`, 'info');
+                    }
+                };
+                
+                try {
+                    reader.readAsDataURL(file);
+                } catch (error) {
+                    console.error('FileReader exception:', error);
+                    this.showStatus('Error reading file. Please try again.', 'error');
+                }
             }
             
-            displayImage() {
+            performDisplayImage() {
                 const container = document.getElementById('canvas-container');
                 const placeholder = document.getElementById('placeholder');
                 
+                // Set maximum display size while maintaining aspect ratio
                 const maxWidth = Math.min(900, container.clientWidth - 60);
                 const maxHeight = 600;
                 
-                let displayWidth = this.image.width;
-                let displayHeight = this.image.height;
+                let displayWidth = this.originalImage.width;
+                let displayHeight = this.originalImage.height;
                 
+                // Calculate scale factors for display
                 if (displayWidth > maxWidth) {
                     displayHeight = (displayHeight * maxWidth) / displayWidth;
                     displayWidth = maxWidth;
@@ -745,6 +822,10 @@
                     displayHeight = maxHeight;
                 }
                 
+                // Store scale factors for coordinate conversion
+                this.scaleX = this.originalImage.width / displayWidth;
+                this.scaleY = this.originalImage.height / displayHeight;
+                
                 this.canvas.width = displayWidth;
                 this.canvas.height = displayHeight;
                 this.canvas.style.display = 'block';
@@ -754,11 +835,88 @@
                 this.redrawCanvas();
             }
             
+            performResetPositions() {
+                this.startPos = null;
+                this.endPos = null;
+                this.isSettingStart = true;
+                
+                document.getElementById('start-pos-card').classList.remove('set');
+                document.getElementById('end-pos-card').classList.remove('set');
+                document.getElementById('start-pos-text').textContent = 'Click on image to set starting point';
+                document.getElementById('end-pos-text').textContent = 'Click on image to set destination';
+                document.getElementById('generate-btn').disabled = true;
+                
+                this.redrawCanvas();
+                
+                if (this.originalImage) {
+                    this.showStatus('Positions reset! Click on the image to set the start position.', 'info');
+                } else {
+                    this.showStatus('Upload a screenshot to begin.', 'info');
+                }
+            }
+            
+            performUpdateResolutionInfo() {
+                const resolutionInfo = document.getElementById('resolution-info');
+                const imageDimensions = document.getElementById('image-dimensions');
+                const outputDimensions = document.getElementById('output-dimensions');
+                
+                imageDimensions.textContent = `${this.originalImage.width} × ${this.originalImage.height}px`;
+                outputDimensions.textContent = `${this.originalImage.width} × ${this.originalImage.height}px (Full Resolution)`;
+                
+                resolutionInfo.style.display = 'block';
+            }
+            
+            displayImage() {
+                const container = document.getElementById('canvas-container');
+                const placeholder = document.getElementById('placeholder');
+                
+                // Set maximum display size while maintaining aspect ratio
+                const maxWidth = Math.min(900, container.clientWidth - 60);
+                const maxHeight = 600;
+                
+                let displayWidth = this.originalImage.width;
+                let displayHeight = this.originalImage.height;
+                
+                // Calculate scale factors for display
+                if (displayWidth > maxWidth) {
+                    displayHeight = (displayHeight * maxWidth) / displayWidth;
+                    displayWidth = maxWidth;
+                }
+                
+                if (displayHeight > maxHeight) {
+                    displayWidth = (displayWidth * maxHeight) / displayHeight;
+                    displayHeight = maxHeight;
+                }
+                
+                // Store scale factors for coordinate conversion
+                this.scaleX = this.originalImage.width / displayWidth;
+                this.scaleY = this.originalImage.height / displayHeight;
+                
+                this.canvas.width = displayWidth;
+                this.canvas.height = displayHeight;
+                this.canvas.style.display = 'block';
+                placeholder.style.display = 'none';
+                container.classList.add('has-image');
+                
+                this.redrawCanvas();
+            }
+            
+            updateResolutionInfo() {
+                const resolutionInfo = document.getElementById('resolution-info');
+                const imageDimensions = document.getElementById('image-dimensions');
+                const outputDimensions = document.getElementById('output-dimensions');
+                
+                imageDimensions.textContent = `${this.originalImage.width} × ${this.originalImage.height}px`;
+                outputDimensions.textContent = `${this.originalImage.width} × ${this.originalImage.height}px (Full Resolution)`;
+                
+                resolutionInfo.style.display = 'block';
+            }
+            
             redrawCanvas() {
-                if (!this.image) return;
+                if (!this.originalImage) return;
                 
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                this.ctx.drawImage(this.image, 0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.drawImage(this.originalImage, 0, 0, this.canvas.width, this.canvas.height);
                 
                 if (this.startPos) {
                     this.drawPositionMarker(this.startPos.x, this.startPos.y, '#48bb78', 'START');
@@ -808,7 +966,7 @@
             }
             
             handleCanvasClick(event) {
-                if (!this.image) return;
+                if (!this.originalImage) return;
                 
                 const rect = this.canvas.getBoundingClientRect();
                 const x = event.clientX - rect.left;
@@ -822,7 +980,7 @@
                 } else {
                     this.endPos = { x, y };
                     this.updatePositionDisplay('end', x, y);
-                    this.showStatus('Perfect! Both positions set. Ready to generate your animation!', 'success');
+                    this.showStatus('Perfect! Both positions set. Ready to generate your HD animation!', 'success');
                     document.getElementById('generate-btn').disabled = false;
                 }
                 
@@ -833,10 +991,9 @@
                 const card = document.getElementById(`${type}-pos-card`);
                 const text = document.getElementById(`${type}-pos-text`);
                 
-                const scaleX = this.image.width / this.canvas.width;
-                const scaleY = this.image.height / this.canvas.height;
-                const originalX = Math.round(x * scaleX);
-                const originalY = Math.round(y * scaleY);
+                // Convert display coordinates to original image coordinates
+                const originalX = Math.round(x * this.scaleX);
+                const originalY = Math.round(y * this.scaleY);
                 
                 text.textContent = `(${originalX}, ${originalY})`;
                 card.classList.add('set');
@@ -855,7 +1012,7 @@
                 
                 this.redrawCanvas();
                 
-                if (this.image) {
+                if (this.originalImage) {
                     this.showStatus('Positions reset! Click on the image to set the start position.', 'info');
                 } else {
                     this.showStatus('Upload a screenshot to begin.', 'info');
@@ -1008,10 +1165,10 @@
                 ctx.restore();
             }
             
-            generateAnimation() {
-                if (!this.startPos || !this.endPos) return;
+            generateHDAnimation() {
+                if (!this.startPos || !this.endPos || !this.originalImage) return;
                 
-                this.showStatus('Generating high-quality animation frames...', 'info');
+                this.showStatus('Generating high-quality HD animation frames...', 'info');
                 document.getElementById('generate-btn').disabled = true;
                 
                 const duration = parseFloat(document.getElementById('duration').value);
@@ -1025,8 +1182,23 @@
                 
                 this.frames = [];
                 
+                // Set preview canvas to match display size
                 this.previewCanvas.width = this.canvas.width;
                 this.previewCanvas.height = this.canvas.height;
+                
+                // Convert display positions to original image coordinates
+                const startPosOriginal = {
+                    x: this.startPos.x * this.scaleX,
+                    y: this.startPos.y * this.scaleY
+                };
+                
+                const endPosOriginal = {
+                    x: this.endPos.x * this.scaleX,
+                    y: this.endPos.y * this.scaleY
+                };
+                
+                // Calculate cursor size relative to original image
+                const hdCursorSize = cursorSize * Math.min(this.scaleX, this.scaleY);
                 
                 let frameCount = 0;
                 const generateFrame = () => {
@@ -1034,32 +1206,41 @@
                         const progress = frameCount / totalFrames;
                         const easedProgress = this.applyEasing(progress, easingType);
                         
-                        const currentX = this.startPos.x + (this.endPos.x - this.startPos.x) * easedProgress;
-                        const currentY = this.startPos.y + (this.endPos.y - this.startPos.y) * easedProgress;
+                        // Calculate position in original image coordinates
+                        const currentX = startPosOriginal.x + (endPosOriginal.x - startPosOriginal.x) * easedProgress;
+                        const currentY = startPosOriginal.y + (endPosOriginal.y - startPosOriginal.y) * easedProgress;
                         
                         const isClicking = frameCount >= clickStartFrame && frameCount < clickStartFrame + clickDuration;
                         
+                        // Create HD frame at original resolution
                         const frameCanvas = document.createElement('canvas');
-                        frameCanvas.width = this.canvas.width;
-                        frameCanvas.height = this.canvas.height;
+                        frameCanvas.width = this.originalImage.width;
+                        frameCanvas.height = this.originalImage.height;
                         const frameCtx = frameCanvas.getContext('2d');
                         
-                        frameCtx.drawImage(this.image, 0, 0, this.canvas.width, this.canvas.height);
-                        this.drawCursor(frameCtx, currentX, currentY, cursorSize, isClicking);
+                        // Enable high-quality rendering
+                        frameCtx.imageSmoothingEnabled = true;
+                        frameCtx.imageSmoothingQuality = 'high';
+                        
+                        // Draw original image at full resolution
+                        frameCtx.drawImage(this.originalImage, 0, 0);
+                        
+                        // Draw cursor at original coordinates with HD size
+                        this.drawCursor(frameCtx, currentX, currentY, hdCursorSize, isClicking);
                         
                         if (isClicking) {
                             const clickProgress = (frameCount - clickStartFrame) / clickDuration;
-                            this.drawClickEffect(frameCtx, this.endPos.x, this.endPos.y, clickProgress);
+                            this.drawClickEffect(frameCtx, endPosOriginal.x, endPosOriginal.y, clickProgress, this.scaleX);
                         }
                         
                         this.frames.push(frameCanvas);
                         frameCount++;
                         
-                        this.showStatus(`Generating frames... ${Math.round((frameCount / (totalFrames + 1)) * 100)}%`, 'info');
+                        this.showStatus(`Generating HD frames... ${Math.round((frameCount / (totalFrames + 1)) * 100)}%`, 'info');
                         
                         requestAnimationFrame(generateFrame);
                     } else {
-                        this.showAnimation();
+                        this.showHDAnimation();
                         document.getElementById('generate-btn').disabled = false;
                     }
                 };
@@ -1067,7 +1248,7 @@
                 generateFrame();
             }
             
-            drawClickEffect(ctx, x, y, progress) {
+            drawClickEffect(ctx, x, y, progress, scale = 1) {
                 ctx.save();
                 
                 for (let i = 0; i < 3; i++) {
@@ -1075,12 +1256,12 @@
                     const adjustedProgress = Math.max(0, progress - delay) / (1 - delay);
                     
                     if (adjustedProgress > 0) {
-                        const radius = adjustedProgress * (30 + i * 10);
+                        const radius = adjustedProgress * (30 + i * 10) * scale;
                         const alpha = (1 - adjustedProgress) * 0.6;
                         
                         ctx.globalAlpha = alpha;
                         ctx.strokeStyle = i === 0 ? '#4299e1' : (i === 1 ? '#63b3ed' : '#90cdf4');
-                        ctx.lineWidth = 3 - i;
+                        ctx.lineWidth = (3 - i) * scale;
                         ctx.beginPath();
                         ctx.arc(x, y, radius, 0, 2 * Math.PI);
                         ctx.stroke();
@@ -1091,14 +1272,14 @@
                     ctx.globalAlpha = (0.3 - progress) / 0.3;
                     ctx.fillStyle = '#ffffff';
                     ctx.beginPath();
-                    ctx.arc(x, y, 8, 0, 2 * Math.PI);
+                    ctx.arc(x, y, 8 * scale, 0, 2 * Math.PI);
                     ctx.fill();
                 }
                 
                 ctx.restore();
             }
             
-            showAnimation() {
+            showHDAnimation() {
                 let currentFrame = 0;
                 const fps = parseInt(document.getElementById('fps').value);
                 const frameDelay = 1000 / fps;
@@ -1109,7 +1290,15 @@
                 const animate = () => {
                     if (this.frames.length > 0) {
                         this.previewCtx.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
-                        this.previewCtx.drawImage(this.frames[currentFrame], 0, 0);
+                        
+                        // Scale down the HD frame for preview
+                        this.previewCtx.imageSmoothingEnabled = true;
+                        this.previewCtx.imageSmoothingQuality = 'high';
+                        this.previewCtx.drawImage(
+                            this.frames[currentFrame], 
+                            0, 0, this.frames[currentFrame].width, this.frames[currentFrame].height,
+                            0, 0, this.previewCanvas.width, this.previewCanvas.height
+                        );
                         
                         currentFrame = (currentFrame + 1) % this.frames.length;
                         setTimeout(() => requestAnimationFrame(animate), frameDelay);
@@ -1117,7 +1306,7 @@
                 };
                 
                 animate();
-                this.showStatus('Animation generated successfully! Preview is playing above.', 'success');
+                this.showStatus(`HD animation generated successfully! Output: ${this.originalImage.width}×${this.originalImage.height}px`, 'success');
             }
             
             downloadFrames() {
@@ -1126,7 +1315,7 @@
                     return;
                 }
                 
-                this.showStatus('Creating ZIP file with all frames...', 'info');
+                this.showStatus('Creating ZIP file with all HD frames...', 'info');
                 document.getElementById('download-zip-btn').disabled = true;
                 
                 this.createZipDownload();
@@ -1138,7 +1327,7 @@
                     return;
                 }
                 
-                this.showStatus('Creating GIF animation...', 'info');
+                this.showStatus('Creating HD GIF animation...', 'info');
                 document.getElementById('download-gif-btn').disabled = true;
                 
                 this.createGifDownload();
@@ -1155,24 +1344,23 @@
                 }
                 
                 try {
-                    // Try with local worker script first, fallback to no workers
                     const gif = new GIF({
                         workers: 2,
                         quality: 10,
-                        width: this.canvas.width,
-                        height: this.canvas.height,
+                        width: this.originalImage.width,
+                        height: this.originalImage.height,
                         repeat: 0,
-                        workerScript: './gif.worker.js' // Local worker script
+                        workerScript: './gif.worker.js'
                     });
                     
                     gif.on('progress', (progress) => {
                         const percent = Math.round(progress * 100);
-                        this.showStatus(`Generating GIF... ${percent}%`, 'info');
+                        this.showStatus(`Generating HD GIF... ${percent}%`, 'info');
                     });
                     
                     gif.on('finished', (blob) => {
                         const link = document.createElement('a');
-                        link.download = 'cursor-animation.gif';
+                        link.download = 'cursor-animation-hd.gif';
                         link.href = URL.createObjectURL(blob);
                         document.body.appendChild(link);
                         link.click();
@@ -1181,7 +1369,7 @@
                         setTimeout(() => URL.revokeObjectURL(link.href), 100);
                         
                         const fileSizeMB = (blob.size / (1024 * 1024)).toFixed(2);
-                        this.showStatus(`GIF downloaded successfully! (${fileSizeMB} MB)`, 'success');
+                        this.showStatus(`HD GIF downloaded successfully! (${fileSizeMB} MB)`, 'success');
                         document.getElementById('download-gif-btn').disabled = false;
                     });
                     
@@ -1190,22 +1378,22 @@
                         document.getElementById('download-gif-btn').disabled = false;
                     });
                     
-                    // Set timeout for generation
                     const timeout = setTimeout(() => {
                         this.showStatus('GIF generation is taking too long. Try downloading as ZIP instead.', 'error');
                         document.getElementById('download-gif-btn').disabled = false;
-                    }, 30000);
+                    }, 60000);
                     
                     gif.on('finished', () => {
                         clearTimeout(timeout);
                     });
                     
+                    // Add HD frames to GIF
                     for (let i = 0; i < this.frames.length; i++) {
                         gif.addFrame(this.frames[i], { delay: delay });
-                        this.showStatus(`Adding frame ${i + 1}/${this.frames.length} to GIF...`, 'info');
+                        this.showStatus(`Adding HD frame ${i + 1}/${this.frames.length} to GIF...`, 'info');
                     }
                     
-                    this.showStatus('Processing GIF... This may take a moment without web workers.', 'info');
+                    this.showStatus('Processing HD GIF... This may take a moment.', 'info');
                     gif.render();
                     
                 } catch (error) {
@@ -1233,7 +1421,7 @@
                         zip.file(fileName, base64Data, { base64: true });
                         
                         const progress = Math.round(((i + 1) / this.frames.length) * 80);
-                        this.showStatus(`Adding frame ${i + 1}/${this.frames.length} to ZIP (${progress}%)...`, 'info');
+                        this.showStatus(`Adding HD frame ${i + 1}/${this.frames.length} to ZIP (${progress}%)...`, 'info');
                     }
                     
                     const animInfo = {
@@ -1241,18 +1429,26 @@
                         fps: parseInt(document.getElementById('fps').value),
                         duration: parseFloat(document.getElementById('duration').value),
                         dimensions: {
-                            width: this.canvas.width,
-                            height: this.canvas.height
+                            width: this.originalImage.width,
+                            height: this.originalImage.height,
+                            originalResolution: true
                         },
                         positions: {
-                            start: this.startPos,
-                            end: this.endPos
-                        }
+                            start: {
+                                x: Math.round(this.startPos.x * this.scaleX),
+                                y: Math.round(this.startPos.y * this.scaleY)
+                            },
+                            end: {
+                                x: Math.round(this.endPos.x * this.scaleX),
+                                y: Math.round(this.endPos.y * this.scaleY)
+                            }
+                        },
+                        note: "All frames are rendered at the original image resolution for maximum quality."
                     };
                     
                     zip.file('animation-info.json', JSON.stringify(animInfo, null, 2));
                     
-                    this.showStatus('Generating ZIP file... 90%', 'info');
+                    this.showStatus('Generating HD ZIP file... 90%', 'info');
                     
                     const zipBlob = await zip.generateAsync({
                         type: 'blob',
@@ -1261,7 +1457,7 @@
                     });
                     
                     const link = document.createElement('a');
-                    link.download = 'cursor-animation-frames.zip';
+                    link.download = 'cursor-animation-hd-frames.zip';
                     link.href = URL.createObjectURL(zipBlob);
                     document.body.appendChild(link);
                     link.click();
@@ -1269,7 +1465,8 @@
                     
                     setTimeout(() => URL.revokeObjectURL(link.href), 100);
                     
-                    this.showStatus('ZIP file downloaded successfully!', 'success');
+                    const fileSizeMB = (zipBlob.size / (1024 * 1024)).toFixed(2);
+                    this.showStatus(`HD ZIP file downloaded successfully! (${fileSizeMB} MB)`, 'success');
                     
                 } catch (error) {
                     console.error('ZIP creation failed:', error);
@@ -1281,7 +1478,7 @@
         }
         
         document.addEventListener('DOMContentLoaded', () => {
-            new CursorAnimationStudio();
+            new HDCursorAnimationStudio();
         });
     </script>
 </body>
